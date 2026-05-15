@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Snippets</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161a22;
+    --panel-2: #1c2230;
+    --border: #262d3d;
+    --text: #e6e9ef;
+    --muted: #8a93a6;
+    --accent: #7cc4ff;
+    --accent-2: #5aa7e8;
+    --danger: #ff6b6b;
+    --ok: #6fdc8c;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: grid; grid-template-columns: 320px 1fr; grid-template-rows: 100%;
+  }
+  aside {
+    border-right: 1px solid var(--border);
+    background: var(--panel);
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  main {
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  header {
+    padding: 12px; border-bottom: 1px solid var(--border);
+    display: flex; gap: 8px; align-items: center;
+  }
+  h1 {
+    font-size: 14px; font-weight: 600; margin: 0; letter-spacing: 0.3px;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .spacer { flex: 1; }
+  button, .btn {
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; cursor: pointer; font: inherit;
+  }
+  button:hover { border-color: var(--accent-2); }
+  button.primary { background: var(--accent); color: #0a0d12; border-color: var(--accent); font-weight: 600; }
+  button.danger { color: var(--danger); }
+  .search {
+    padding: 10px; border-bottom: 1px solid var(--border);
+  }
+  .search input {
+    width: 100%; padding: 8px 10px; border-radius: 6px;
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); outline: none;
+  }
+  .search input:focus { border-color: var(--accent-2); }
+  ul.list { list-style: none; margin: 0; padding: 6px; overflow: auto; flex: 1; }
+  ul.list li {
+    padding: 10px; border-radius: 6px; cursor: pointer;
+    border: 1px solid transparent;
+  }
+  ul.list li:hover { background: var(--panel-2); }
+  ul.list li.active { background: var(--panel-2); border-color: var(--border); }
+  .item-title { font-weight: 600; }
+  .item-meta { color: var(--muted); font-size: 12px; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tag {
+    display: inline-block; padding: 1px 6px; margin-right: 4px;
+    background: #243049; color: #b8d3ff; border-radius: 10px; font-size: 11px;
+  }
+  .editor {
+    padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    flex: 1; min-height: 0;
+  }
+  .editor input[type=text], .editor textarea {
+    width: 100%; padding: 8px 10px; border-radius: 6px;
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); outline: none;
+    font: inherit;
+  }
+  .editor textarea {
+    flex: 1; resize: none; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px; line-height: 1.55; min-height: 200px;
+  }
+  .editor input[type=text]:focus, .editor textarea:focus { border-color: var(--accent-2); }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .empty {
+    flex: 1; display: grid; place-items: center; color: var(--muted);
+    padding: 24px; text-align: center;
+  }
+  .empty kbd {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 6px; font-size: 12px;
+  }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--panel-2); border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: 8px; color: var(--ok);
+    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  dialog {
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; min-width: 360px;
+  }
+  dialog::backdrop { background: rgba(0,0,0,0.5); }
+  dialog h2 { margin: 0 0 10px; font-size: 14px; }
+  dialog .var-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  dialog .var-row label { font-size: 12px; color: var(--muted); }
+  dialog .var-row input {
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 8px; outline: none; font: inherit;
+  }
+  dialog .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+  .file-input { display: none; }
+</style>
+</head>
+<body>
+<aside>
+  <header>
+    <h1>Snippets</h1>
+    <span class="spacer"></span>
+    <button id="new-btn" class="primary" title="New snippet (Ctrl/Cmd+N)">+ New</button>
+  </header>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search name, body, or #tag…" autocomplete="off" />
+  </div>
+  <ul class="list" id="list"></ul>
+  <header style="border-top: 1px solid var(--border); border-bottom: none;">
+    <button id="export-btn" title="Export as JSON">Export</button>
+    <button id="import-btn" title="Import JSON">Import</button>
+    <input id="import-file" type="file" accept="application/json" class="file-input" />
+    <span class="spacer"></span>
+    <span class="label" id="count"></span>
+  </header>
+</aside>
+
+<main>
+  <div id="editor-wrap" class="editor" hidden>
+    <div class="row">
+      <input id="title" type="text" placeholder="Snippet name" />
+      <button id="copy-btn" class="primary" title="Copy to clipboard (Ctrl/Cmd+Enter)">Copy</button>
+      <button id="delete-btn" class="danger" title="Delete">Delete</button>
+    </div>
+    <div class="row">
+      <input id="tags" type="text" placeholder="tags, comma separated" />
+    </div>
+    <textarea id="body" spellcheck="false" placeholder="Body. Use {{variable}} for prompts on copy."></textarea>
+    <div class="label" id="hint">Tip: <code>{{name}}</code> in the body will prompt you on copy.</div>
+  </div>
+  <div id="empty" class="empty">
+    <div>
+      <div style="font-size: 18px; color: var(--text); margin-bottom: 6px;">No snippet selected</div>
+      <div>Press <kbd>+ New</kbd> or <kbd>Ctrl/Cmd+N</kbd> to create one.</div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<dialog id="var-dialog">
+  <h2>Fill in variables</h2>
+  <form id="var-form" method="dialog">
+    <div id="var-fields"></div>
+    <div class="actions">
+      <button type="button" id="var-cancel">Cancel</button>
+      <button type="submit" class="primary">Copy</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const STORAGE_KEY = "snippets.v1";
+const $ = (id) => document.getElementById(id);
+
+let state = {
+  snippets: load(),
+  selectedId: null,
+  query: "",
+};
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return seed();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return seed();
+    return parsed;
+  } catch { return seed(); }
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.snippets));
+}
+
+function seed() {
+  return [
+    {
+      id: uid(),
+      title: "PR description template",
+      tags: ["work", "git"],
+      body: "## Summary\n- {{summary}}\n\n## Test plan\n- [ ] {{test}}\n",
+      updated: Date.now(),
+    },
+    {
+      id: uid(),
+      title: "Polite decline",
+      tags: ["email"],
+      body: "Hi {{name}},\n\nThanks for the offer — I won't be able to take this on right now. Appreciate you thinking of me.\n\nBest,\n",
+      updated: Date.now(),
+    },
+  ];
+}
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function filtered() {
+  const q = state.query.trim().toLowerCase();
+  if (!q) return [...state.snippets].sort((a, b) => b.updated - a.updated);
+  const tagQ = q.startsWith("#") ? q.slice(1) : null;
+  return state.snippets
+    .filter(s => {
+      if (tagQ) return (s.tags || []).some(t => t.toLowerCase().includes(tagQ));
+      return s.title.toLowerCase().includes(q)
+        || s.body.toLowerCase().includes(q)
+        || (s.tags || []).some(t => t.toLowerCase().includes(q));
+    })
+    .sort((a, b) => b.updated - a.updated);
+}
+
+function render() {
+  const list = $("list");
+  const items = filtered();
+  list.innerHTML = "";
+  for (const s of items) {
+    const li = document.createElement("li");
+    li.dataset.id = s.id;
+    if (s.id === state.selectedId) li.classList.add("active");
+    const tags = (s.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+    li.innerHTML = `
+      <div class="item-title">${escapeHtml(s.title || "Untitled")}</div>
+      <div class="item-meta">${tags}${escapeHtml(s.body.split("\n")[0].slice(0, 80))}</div>
+    `;
+    li.addEventListener("click", () => select(s.id));
+    list.appendChild(li);
+  }
+  $("count").textContent = `${items.length} / ${state.snippets.length}`;
+  renderEditor();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function current() {
+  return state.snippets.find(s => s.id === state.selectedId) || null;
+}
+
+function renderEditor() {
+  const s = current();
+  if (!s) {
+    $("editor-wrap").hidden = true;
+    $("empty").hidden = false;
+    return;
+  }
+  $("editor-wrap").hidden = false;
+  $("empty").hidden = true;
+  $("title").value = s.title || "";
+  $("tags").value = (s.tags || []).join(", ");
+  $("body").value = s.body || "";
+}
+
+function select(id) {
+  state.selectedId = id;
+  render();
+  $("title").focus();
+}
+
+function createNew() {
+  const s = {
+    id: uid(), title: "", tags: [], body: "", updated: Date.now(),
+  };
+  state.snippets.push(s);
+  state.selectedId = s.id;
+  save();
+  render();
+  $("title").focus();
+}
+
+function deleteCurrent() {
+  const s = current();
+  if (!s) return;
+  if (!confirm(`Delete "${s.title || "Untitled"}"?`)) return;
+  state.snippets = state.snippets.filter(x => x.id !== s.id);
+  state.selectedId = null;
+  save();
+  render();
+}
+
+function updateCurrentFromInputs() {
+  const s = current();
+  if (!s) return;
+  const before = JSON.stringify([s.title, s.tags, s.body]);
+  s.title = $("title").value;
+  s.tags = $("tags").value.split(",").map(t => t.trim()).filter(Boolean);
+  s.body = $("body").value;
+  const after = JSON.stringify([s.title, s.tags, s.body]);
+  if (before !== after) {
+    s.updated = Date.now();
+    save();
+  }
+}
+
+function extractVars(body) {
+  const set = new Set();
+  const re = /\{\{\s*([a-zA-Z0-9_\-\.]+)\s*\}\}/g;
+  let m;
+  while ((m = re.exec(body)) !== null) set.add(m[1]);
+  return [...set];
+}
+
+function fillVars(body, values) {
+  return body.replace(/\{\{\s*([a-zA-Z0-9_\-\.]+)\s*\}\}/g, (_, k) =>
+    Object.prototype.hasOwnProperty.call(values, k) ? values[k] : `{{${k}}}`
+  );
+}
+
+async function copyCurrent() {
+  const s = current();
+  if (!s) return;
+  updateCurrentFromInputs();
+  const vars = extractVars(s.body);
+  let text = s.body;
+  if (vars.length > 0) {
+    const values = await promptVars(vars);
+    if (values === null) return;
+    text = fillVars(s.body, values);
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("Copied!");
+  } catch {
+    toast("Copy failed — select & copy manually");
+  }
+}
+
+function promptVars(vars) {
+  return new Promise(resolve => {
+    const dlg = $("var-dialog");
+    const fields = $("var-fields");
+    fields.innerHTML = "";
+    for (const v of vars) {
+      const row = document.createElement("div");
+      row.className = "var-row";
+      row.innerHTML = `<label for="var-${v}">${escapeHtml(v)}</label>
+        <input id="var-${v}" name="${escapeHtml(v)}" autocomplete="off" />`;
+      fields.appendChild(row);
+    }
+    const form = $("var-form");
+    const cancel = $("var-cancel");
+    function cleanup() {
+      form.removeEventListener("submit", onSubmit);
+      cancel.removeEventListener("click", onCancel);
+    }
+    function onSubmit(e) {
+      const values = {};
+      for (const v of vars) values[v] = $(`var-${v}`).value;
+      cleanup();
+      dlg.close();
+      resolve(values);
+    }
+    function onCancel() {
+      cleanup();
+      dlg.close();
+      resolve(null);
+    }
+    form.addEventListener("submit", onSubmit);
+    cancel.addEventListener("click", onCancel);
+    dlg.showModal();
+    const first = fields.querySelector("input");
+    if (first) first.focus();
+  });
+}
+
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._h);
+  toast._h = setTimeout(() => t.classList.remove("show"), 1200);
+}
+
+function exportJson() {
+  const blob = new Blob([JSON.stringify(state.snippets, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `snippets-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJson(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!Array.isArray(parsed)) throw new Error("not an array");
+      const existing = new Set(state.snippets.map(s => s.id));
+      for (const s of parsed) {
+        if (!s || typeof s !== "object") continue;
+        const item = {
+          id: existing.has(s.id) ? uid() : (s.id || uid()),
+          title: String(s.title || ""),
+          tags: Array.isArray(s.tags) ? s.tags.map(String) : [],
+          body: String(s.body || ""),
+          updated: Number(s.updated) || Date.now(),
+        };
+        state.snippets.push(item);
+        existing.add(item.id);
+      }
+      save();
+      render();
+      toast(`Imported ${parsed.length}`);
+    } catch (e) {
+      toast("Import failed");
+    }
+  };
+  reader.readAsText(file);
+}
+
+$("new-btn").addEventListener("click", createNew);
+$("delete-btn").addEventListener("click", deleteCurrent);
+$("copy-btn").addEventListener("click", copyCurrent);
+$("search").addEventListener("input", e => {
+  state.query = e.target.value;
+  render();
+});
+for (const id of ["title", "tags", "body"]) {
+  $(id).addEventListener("input", () => {
+    updateCurrentFromInputs();
+    const listItem = document.querySelector(`#list li[data-id="${state.selectedId}"] .item-title`);
+    if (listItem) listItem.textContent = $("title").value || "Untitled";
+  });
+}
+$("export-btn").addEventListener("click", exportJson);
+$("import-btn").addEventListener("click", () => $("import-file").click());
+$("import-file").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (f) importJson(f);
+  e.target.value = "";
+});
+
+document.addEventListener("keydown", e => {
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === "n") {
+    e.preventDefault();
+    createNew();
+  } else if (mod && e.key === "Enter") {
+    e.preventDefault();
+    copyCurrent();
+  } else if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+    e.preventDefault();
+    $("search").focus();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
